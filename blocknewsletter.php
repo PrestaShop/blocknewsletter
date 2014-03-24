@@ -46,8 +46,9 @@ class Blocknewsletter extends Module
 		$this->displayName = $this->l('Newsletter block');
 		$this->description = $this->l('Adds a block for newsletter subscription.');
 		$this->confirmUninstall = $this->l('Are you sure that you want to delete all of your contacts?');
+		$this->ps_versions_compliancy = array('min' => '1.5.6.1', 'max' => _PS_VERSION_);
 
-		$this->version = '1.4';
+		$this->version = '1.5';
 		$this->author = 'PrestaShop';
 		$this->error = false;
 		$this->valid = false;
