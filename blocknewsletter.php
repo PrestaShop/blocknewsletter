@@ -205,7 +205,7 @@ class Blocknewsletter extends Module
 		if ((int)$id > 0)
 		{
 			return '<a class="edit btn btn-default" title="View" href="index.php?controller=AdminCustomers&id_customer='.(int)$id.'&updatecustomer&token='.Tools::getAdminTokenLite('AdminCustomers').'">
-	<i class="icon-pencil"></i> '.$this->l('View').'
+	<i class="icon-search-plus"></i> '.$this->l('View').'
 </a>';
 		}
 
