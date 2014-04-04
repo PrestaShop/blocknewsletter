@@ -150,39 +150,39 @@ class Blocknewsletter extends Module
 
 		$fields_list = array(
 			'id_customer' => array(
-				'title' => $this->l('id'),
+				'title' => $this->l('ID'),
 				'align' => 'center',
 				'width' => 'auto'
 			),
 			'id_shop' => array(
-				'title' => $this->l('id_shop'),
+				'title' => $this->l('Shop ID'),
 				'align' => 'center',
 				'width' => 'auto'
 			),
 			'lastname' => array(
-				'title' => $this->l('lastname'),
+				'title' => $this->l('Last name'),
 				'align' => 'center',
 				'width' => 'auto'
 			),
 			'firstname' => array(
-				'title' => $this->l('firstname'),
+				'title' => $this->l('First name'),
 				'align' => 'center',
 				'width' => 'auto'
 			),
 			'email' => array(
-				'title' => $this->l('email'),
+				'title' => $this->l('Email address'),
 				'align' => 'center',
 				'width' => 'auto'
 			),
 			'newsletter_date_add' => array(
-				'title' => $this->l('newsletter_date_add'),
+				'title' => $this->l('Registration date'),
 				'align' => 'center',
 				'width' => 'auto'
 			)
 		);
 		$helper_list = New HelperList();
 		$helper_list->module = $this;
-		$helper_list->title = $this->l('newsletter registration');
+		$helper_list->title = $this->l('Newsletter registrations');
 		$helper_list->shopLinkType = '';
 		$helper_list->no_link = true;
 		$helper_list->simple_header = true;
