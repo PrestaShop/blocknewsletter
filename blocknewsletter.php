@@ -94,23 +94,24 @@ class Blocknewsletter extends Module
 		$this->_html = '';
 
 		$dbquery = new DbQuery();
-		$dbquery->select('c.`id_customer`, c.`id_shop`, c.`lastname`, c.`firstname`, c.`email`, c.`newsletter_date_add`')->from('customer', 'c')->where('c.`newsletter` = 1');
+		$dbquery->select('c.`id_customer` AS `id`, s.`name`, gl.`name` AS `gender`, c.`lastname`, c.`firstname`, c.`email`, c.`newsletter` AS `subscribed`, c.`newsletter_date_add`');
+		$dbquery->from('customer', 'c');
+		$dbquery->leftJoin('shop', 's', 's.id_shop = c.id_shop');
+		$dbquery->leftJoin('gender', 'g', 'g.id_gender = c.id_gender');
+		$dbquery->leftJoin('gender_lang', 'gl', 'g.id_gender = gl.id_gender AND gl.id_lang = '.$this->context->employee->id_lang);
+		$dbquery->where('c.`newsletter` = 1');
 
 		$customers = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($dbquery->build());
 
-		$non_customers = Db::getInstance()->executeS('SELECT `email`, `id_shop`, `newsletter_date_add` FROM `'._DB_PREFIX_.'newsletter` WHERE `active` = 1');
+		$dbquery = new DbQuery();
+		$dbquery->select('CONCAT(\'N\', n.`id`) AS `id`, s.`name`, NULL AS `gender`, NULL AS `lastname`, NULL AS `firstname`, n.`email`, n.`active` AS `subscribed`, n.`newsletter_date_add`');
+		$dbquery->from('newsletter', 'n');
+		$dbquery->leftJoin('shop', 's', 's.id_shop = n.id_shop');
+		$dbquery->where('n.`active` = 1');
 
-		foreach ($non_customers as &$non_customer)
-		{
-			$non_customer['id_customer'] = '';
-			$non_customer['lastname'] = '';
-			$non_customer['firstname'] = '';
-		}
+		$non_customers = Db::getInstance()->executeS($dbquery->build());
 
 		$customers = array_merge($customers, $non_customers);
-
-		foreach ($customers as &$customer)
-			ksort($customer);
 
 		if (Tools::isSubmit('submitUpdate'))
 		{
@@ -131,9 +132,28 @@ class Blocknewsletter extends Module
 				$this->_html .= $this->displayConfirmation($this->l('Settings updated'));
 			}
 		}
-		elseif (Tools::isSubmit('exportCustomers'))
+		elseif (Tools::isSubmit('subscribedcustomer'))
 		{
-			$header = array('email', 'firstname', 'id_customer', 'id_shop', 'lastname', 'newsletter_date_add');
+			$id = Tools::getValue('id');
+
+			if(preg_match('/(^N)/', $id))
+			{
+				$id = (int)substr($id, 1);
+				$sql = 'UPDATE '._DB_PREFIX_.'newsletter SET active = 0 WHERE id = '.$id;
+				Db::getInstance()->execute($sql);
+			}
+			else
+			{
+				$c = new Customer((int)$id);
+				$c->newsletter = (int)!$c->newsletter;
+				$c->update();
+			}
+			Tools::redirectAdmin($this->context->link->getAdminLink('AdminModules', false).'&configure='.$this->name.'&conf=4&token='.Tools::getAdminTokenLite('AdminModules'));
+
+		}
+		elseif (Tools::isSubmit('exportSubscribers'))
+		{
+			$header = array('id', 'shop_name', 'gender', 'lastname', 'firstname', 'email', 'subscribed', 'subscribed_on'); // TODO
 			$array_to_export = array_merge(array($header), $customers);
 
 			$file_name = time().'.csv';
@@ -145,56 +165,74 @@ class Blocknewsletter extends Module
 				fwrite($fd, $line, 4096);
 			}
 			fclose($fd);
-			$this->_html .= $this->displayConfirmation('<a href="'.$this->_path.$file_name.'">'.$file_name.'</a>');
+			Tools::redirect(_PS_BASE_URL_.__PS_BASE_URI__.'modules/'.$this->name.'/'.$file_name);
 		}
 
 		$fields_list = array(
-			'id_customer' => array(
-				'title' => $this->l('id'),
-				'align' => 'center',
-				'width' => 'auto'
+			'id' => array(
+				'title' => $this->l('ID'),
+				'search' => false,
 			),
-			'id_shop' => array(
-				'title' => $this->l('id_shop'),
-				'align' => 'center',
-				'width' => 'auto'
+			'name' => array(
+				'title' => $this->l('Shop'),
+				'search' => false,
+			),
+			'gender' => array(
+				'title' => $this->l('Gender'),
+				'search' => false,
 			),
 			'lastname' => array(
-				'title' => $this->l('lastname'),
-				'align' => 'center',
-				'width' => 'auto'
+				'title' => $this->l('Lastname'),
+				'search' => false,
 			),
 			'firstname' => array(
-				'title' => $this->l('firstname'),
-				'align' => 'center',
-				'width' => 'auto'
+				'title' => $this->l('Firstname'),
+				'search' => false,
 			),
 			'email' => array(
-				'title' => $this->l('email'),
-				'align' => 'center',
-				'width' => 'auto'
+				'title' => $this->l('Email'),
+				'search' => false,
+			),
+			'subscribed' => array(
+				'title' => $this->l('Subscribed'),
+				'type' => 'bool',
+				'active' => 'subscribed',
+				'search' => false,
 			),
 			'newsletter_date_add' => array(
-				'title' => $this->l('newsletter_date_add'),
-				'align' => 'center',
-				'width' => 'auto'
+				'title' => $this->l('Subscribed on'),
+				'type' => 'date',
+				'search' => false,
 			)
 		);
+
+		if (!Configuration::get('PS_MULTISHOP_FEATURE_ACTIVE'))
+			unset($fields_list['name']);
+
 		$helper_list = New HelperList();
 		$helper_list->module = $this;
 		$helper_list->title = $this->l('newsletter registration');
 		$helper_list->shopLinkType = '';
 		$helper_list->no_link = true;
-		$helper_list->simple_header = true;
-		$helper_list->identifier = 'id_customer';
+		$helper_list->show_toolbar = true;
+		$helper_list->simple_header = false;
+		$helper_list->identifier = 'id';
 		$helper_list->table = 'customer';
 		$helper_list->currentIndex = $this->context->link->getAdminLink('AdminModules', false).'&configure='.$this->name;
 		$helper_list->token = Tools::getAdminTokenLite('AdminModules');
 		$helper_list->actions = array('viewCustomer');
+		$helper_list->toolbar_btn['export'] = array(
+			'href' => $helper_list->currentIndex.'&amp;exportSubscribers&amp;token='.$helper_list->token,
+			'desc' => $this->l('Export')
+		);
+
+		// This is needed for displayEnableLink to avoir code duplication
+		$this->_helperlist = $helper_list;
+
 		$helper_list = $helper_list->generateList($customers, $fields_list);
 
-		$button = '<div class="panel"><a href="'.$this->context->link->getAdminLink('AdminModules', false).'&exportCustomers&configure='.$this->name.'&token='.Tools::getAdminTokenLite('AdminModules').'">
-    <button class="btn btn-default">'.$this->l('Export as CSV').'</button>
+		$button = '<div class="panel"><a href="'.$this->context->link->getAdminLink('AdminModules', false).'&exportSubscribers&configure='.$this->name.'&token='.Tools::getAdminTokenLite('AdminModules').'">
+    <button class="btn btn-default btn-lg"><span class="icon icon-share"></span> '.$this->l('Export as CSV').'</button>
 </a></div>';
 
 		return $this->_html.$this->renderForm().$helper_list.$button;
@@ -212,6 +250,17 @@ class Blocknewsletter extends Module
 		return false;
 	}
 
+	public function displayEnableLink($token, $id, $value, $active, $id_category = null, $id_product = null, $ajax = false)
+	{
+		$this->smarty->assign(array(
+			'ajax' => $ajax,
+			'enabled' => (bool)$value,
+			'url_enable' => Tools::safeOutput($this->_helperlist->currentIndex.'&'.$this->_helperlist->identifier.'='.$id.'&'.$active.$this->_helperlist->table.($ajax ? '&action='.$active.$this->_helperlist->table.'&ajax='.(int)$ajax : '').
+				((int)$id_category && (int)$id_product ? '&id_category='.(int)$id_category : '').'&token='.($token != null ? $token : $this->token))
+		));
+
+		return $this->display(__FILE__, 'views/templates/admin/list_action_enable.tpl');
+	}
 	/**
 	 * Check if this mail is registered for newsletters
 	 *
