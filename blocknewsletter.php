@@ -226,6 +226,14 @@ class Blocknewsletter extends Module
 			'desc' => $this->l('Export')
 		);
 
+		/* Before 1.6.0.7 displayEnableLink() could not be overridden in Module class
+		   we declare another row action instead 			*/
+		if (version_compare(_PS_VERSION_, '1.6.0.7', '<'))
+		{
+			unset($fields_list['subscribed']);
+			$helper_list->actions = array_merge($helper_list->actions, array('unsubscribe'));
+		}
+
 		// This is needed for displayEnableLink to avoir code duplication
 		$this->_helperlist = $helper_list;
 
@@ -238,16 +246,15 @@ class Blocknewsletter extends Module
 		return $this->_html.$this->renderForm().$helper_list.$button;
 	}
 
-	public function displayViewCustomerLink($token, $id)
+	public function displayViewCustomerLink($token = null, $id, $name = null)
 	{
-		if ((int)$id > 0)
-		{
-			return '<a class="edit btn btn-default" title="View" href="index.php?controller=AdminCustomers&id_customer='.(int)$id.'&updatecustomer&token='.Tools::getAdminTokenLite('AdminCustomers').'">
-	<i class="icon-search-plus"></i> '.$this->l('View').'
-</a>';
-		}
+		$this->smarty->assign(array(
+			'href' => 'index.php?controller=AdminCustomers&id_customer='.(int)$id.'&updatecustomer&token='.Tools::getAdminTokenLite('AdminCustomers'),
+			'action' => $this->l('View'),
+			'disable' => !((int)$id > 0),
+		));
 
-		return false;
+		return $this->display(__FILE__, 'views/templates/admin/list_action_viewcustomer.tpl');
 	}
 
 	public function displayEnableLink($token, $id, $value, $active, $id_category = null, $id_product = null, $ajax = false)
@@ -256,11 +263,22 @@ class Blocknewsletter extends Module
 			'ajax' => $ajax,
 			'enabled' => (bool)$value,
 			'url_enable' => Tools::safeOutput($this->_helperlist->currentIndex.'&'.$this->_helperlist->identifier.'='.$id.'&'.$active.$this->_helperlist->table.($ajax ? '&action='.$active.$this->_helperlist->table.'&ajax='.(int)$ajax : '').
-				((int)$id_category && (int)$id_product ? '&id_category='.(int)$id_category : '').'&token='.($token != null ? $token : $this->token))
+				((int)$id_category && (int)$id_product ? '&id_category='.(int)$id_category : '').'&token='.$token)
 		));
 
 		return $this->display(__FILE__, 'views/templates/admin/list_action_enable.tpl');
 	}
+
+	public function displayUnsubscribeLink($token = null, $id, $name = null)
+	{
+		$this->smarty->assign(array(
+			'href' => Tools::safeOutput($this->_helperlist->currentIndex.'&subscribedcustomer&'.$this->_helperlist->identifier.'='.$id.'&token='.$token),
+			'action' => $this->l('Unsubscribe'),
+		));
+
+		return $this->display(__FILE__, 'views/templates/admin/list_action_unsubscribe.tpl');
+	}
+
 	/**
 	 * Check if this mail is registered for newsletters
 	 *
