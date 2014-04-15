@@ -212,6 +212,7 @@ class Blocknewsletter extends Module
 		$helper_list = New HelperList();
 		$helper_list->module = $this;
 		$helper_list->title = $this->l('newsletter registration');
+		$helper_list->listTotal = count($customers);
 		$helper_list->shopLinkType = '';
 		$helper_list->no_link = true;
 		$helper_list->show_toolbar = true;
