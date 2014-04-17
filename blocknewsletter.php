@@ -59,6 +59,8 @@ class Blocknewsletter extends Module
 				1 => 'txt'
 			)
 		);
+
+		$this->_html = '';
 	}
 
 	public function install()
@@ -91,28 +93,6 @@ class Blocknewsletter extends Module
 
 	public function getContent()
 	{
-		$this->_html = '';
-
-		$dbquery = new DbQuery();
-		$dbquery->select('c.`id_customer` AS `id`, s.`name`, gl.`name` AS `gender`, c.`lastname`, c.`firstname`, c.`email`, c.`newsletter` AS `subscribed`, c.`newsletter_date_add`');
-		$dbquery->from('customer', 'c');
-		$dbquery->leftJoin('shop', 's', 's.id_shop = c.id_shop');
-		$dbquery->leftJoin('gender', 'g', 'g.id_gender = c.id_gender');
-		$dbquery->leftJoin('gender_lang', 'gl', 'g.id_gender = gl.id_gender AND gl.id_lang = '.$this->context->employee->id_lang);
-		$dbquery->where('c.`newsletter` = 1');
-
-		$customers = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($dbquery->build());
-
-		$dbquery = new DbQuery();
-		$dbquery->select('CONCAT(\'N\', n.`id`) AS `id`, s.`name`, NULL AS `gender`, NULL AS `lastname`, NULL AS `firstname`, n.`email`, n.`active` AS `subscribed`, n.`newsletter_date_add`');
-		$dbquery->from('newsletter', 'n');
-		$dbquery->leftJoin('shop', 's', 's.id_shop = n.id_shop');
-		$dbquery->where('n.`active` = 1');
-
-		$non_customers = Db::getInstance()->executeS($dbquery->build());
-
-		$customers = array_merge($customers, $non_customers);
-
 		if (Tools::isSubmit('submitUpdate'))
 		{
 			$conf_email = Tools::getValue('NW_CONFIRMATION_EMAIL');
@@ -154,7 +134,7 @@ class Blocknewsletter extends Module
 		elseif (Tools::isSubmit('exportSubscribers'))
 		{
 			$header = array('id', 'shop_name', 'gender', 'lastname', 'firstname', 'email', 'subscribed', 'subscribed_on'); // TODO
-			$array_to_export = array_merge(array($header), $customers);
+			$array_to_export = array_merge(array($header), $this->getSubscribers());
 
 			$file_name = time().'.csv';
 			$fd = fopen($this->getLocalPath().$file_name, 'w+');
@@ -168,12 +148,24 @@ class Blocknewsletter extends Module
 			Tools::redirect(_PS_BASE_URL_.__PS_BASE_URI__.'modules/'.$this->name.'/'.$file_name);
 		}
 
+		$this->_html .= $this->renderForm();
+		$this->_html .= $this->renderList();
+
+		$this->_html .= '<div class="panel"><a href="'.$this->context->link->getAdminLink('AdminModules', false).'&exportSubscribers&configure='.$this->name.'&token='.Tools::getAdminTokenLite('AdminModules').'">
+    <button class="btn btn-default btn-lg"><span class="icon icon-share"></span> '.$this->l('Export as CSV').'</button>
+</a></div>';
+
+		return $this->_html;
+	}
+
+	public function renderList()
+	{
 		$fields_list = array(
 			'id' => array(
 				'title' => $this->l('ID'),
 				'search' => false,
 			),
-			'name' => array(
+			'shop_name' => array(
 				'title' => $this->l('Shop'),
 				'search' => false,
 			),
@@ -207,18 +199,17 @@ class Blocknewsletter extends Module
 		);
 
 		if (!Configuration::get('PS_MULTISHOP_FEATURE_ACTIVE'))
-			unset($fields_list['name']);
+			unset($fields_list['shop_name']);
 
 		$helper_list = New HelperList();
 		$helper_list->module = $this;
 		$helper_list->title = $this->l('newsletter registration');
-		$helper_list->listTotal = count($customers);
 		$helper_list->shopLinkType = '';
 		$helper_list->no_link = true;
 		$helper_list->show_toolbar = true;
 		$helper_list->simple_header = false;
 		$helper_list->identifier = 'id';
-		$helper_list->table = 'customer';
+		$helper_list->table = 'merged';
 		$helper_list->currentIndex = $this->context->link->getAdminLink('AdminModules', false).'&configure='.$this->name;
 		$helper_list->token = Tools::getAdminTokenLite('AdminModules');
 		$helper_list->actions = array('viewCustomer');
@@ -235,16 +226,19 @@ class Blocknewsletter extends Module
 			$helper_list->actions = array_merge($helper_list->actions, array('unsubscribe'));
 		}
 
-		// This is needed for displayEnableLink to avoir code duplication
+		// This is needed for displayEnableLink to avoid code duplication
 		$this->_helperlist = $helper_list;
 
-		$helper_list = $helper_list->generateList($customers, $fields_list);
+		/* Retrieve list data */
+		$subscribers = $this->getSubscribers();
+		$helper_list->listTotal = count($subscribers);
 
-		$button = '<div class="panel"><a href="'.$this->context->link->getAdminLink('AdminModules', false).'&exportSubscribers&configure='.$this->name.'&token='.Tools::getAdminTokenLite('AdminModules').'">
-    <button class="btn btn-default btn-lg"><span class="icon icon-share"></span> '.$this->l('Export as CSV').'</button>
-</a></div>';
+		/* Paginate the result */
+		$page = ($page = Tools::getValue('submitFilter'.$helper_list->table)) ? $page : 1;
+		$pagination = ($pagination = Tools::getValue($helper_list->table.'_pagination')) ? $pagination : 50;
+		$subscribers = $this->paginateSubscribers($subscribers, $page, $pagination);
 
-		return $this->_html.$this->renderForm().$helper_list.$button;
+		return $helper_list->generateList($subscribers, $fields_list);
 	}
 
 	public function displayViewCustomerLink($token = null, $id, $name = null)
@@ -373,6 +367,39 @@ class Blocknewsletter extends Module
 				}
 			}
 		}
+	}
+
+	public function getSubscribers()
+	{
+		$dbquery = new DbQuery();
+		$dbquery->select('c.`id_customer` AS `id`, s.`name` AS `shop_name`, gl.`name` AS `gender`, c.`lastname`, c.`firstname`, c.`email`, c.`newsletter` AS `subscribed`, c.`newsletter_date_add`');
+		$dbquery->from('customer', 'c');
+		$dbquery->leftJoin('shop', 's', 's.id_shop = c.id_shop');
+		$dbquery->leftJoin('gender', 'g', 'g.id_gender = c.id_gender');
+		$dbquery->leftJoin('gender_lang', 'gl', 'g.id_gender = gl.id_gender AND gl.id_lang = '.$this->context->employee->id_lang);
+		$dbquery->where('c.`newsletter` = 1');
+
+		$customers = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($dbquery->build());
+
+		$dbquery = new DbQuery();
+		$dbquery->select('CONCAT(\'N\', n.`id`) AS `id`, s.`name` AS `shop_name`, NULL AS `gender`, NULL AS `lastname`, NULL AS `firstname`, n.`email`, n.`active` AS `subscribed`, n.`newsletter_date_add`');
+		$dbquery->from('newsletter', 'n');
+		$dbquery->leftJoin('shop', 's', 's.id_shop = n.id_shop');
+		$dbquery->where('n.`active` = 1');
+
+		$non_customers = Db::getInstance()->executeS($dbquery->build());
+
+		$subscribers = array_merge($customers, $non_customers);
+
+		return $subscribers;
+	}
+
+	public function paginateSubscribers($subscribers, $page = 1, $pagination = 50)
+	{
+		if(count($subscribers) > $pagination)
+			$subscribers = array_slice($subscribers, $pagination * ($page - 1), $pagination);
+
+		return $subscribers;
 	}
 
 	/**
