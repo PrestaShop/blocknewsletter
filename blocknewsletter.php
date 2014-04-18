@@ -609,6 +609,11 @@ class Blocknewsletter extends Module
 	{
 		return $this->hookDisplayLeftColumn($params);
 	}
+	
+	public function hookdisplayMaintenance($params) 
+	{
+		return $this->hookDisplayLeftColumn($params);
+	}
 
 	public function hookDisplayHeader($params)
 	{
