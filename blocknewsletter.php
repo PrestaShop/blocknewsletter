@@ -60,6 +60,8 @@ class Blocknewsletter extends Module
 			)
 		);
 
+		$this->_searched_email = null;
+
 		$this->_html = '';
 	}
 
@@ -147,8 +149,11 @@ class Blocknewsletter extends Module
 			fclose($fd);
 			Tools::redirect(_PS_BASE_URL_.__PS_BASE_URI__.'modules/'.$this->name.'/'.$file_name);
 		}
+		elseif (Tools::isSubmit('searchEmail'))
+			$this->_searched_email = Tools::getValue('searched_email');
 
 		$this->_html .= $this->renderForm();
+		$this->_html .= $this->renderSearchForm();
 		$this->_html .= $this->renderList();
 
 		$this->_html .= '<div class="panel"><a href="'.$this->context->link->getAdminLink('AdminModules', false).'&exportSubscribers&configure='.$this->name.'&token='.Tools::getAdminTokenLite('AdminModules').'">
@@ -378,6 +383,8 @@ class Blocknewsletter extends Module
 		$dbquery->leftJoin('gender', 'g', 'g.id_gender = c.id_gender');
 		$dbquery->leftJoin('gender_lang', 'gl', 'g.id_gender = gl.id_gender AND gl.id_lang = '.$this->context->employee->id_lang);
 		$dbquery->where('c.`newsletter` = 1');
+		if ($this->_searched_email)
+			$dbquery->where('c.`email` LIKE \'%'.bqSQL($this->_searched_email).'%\' ');
 
 		$customers = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($dbquery->build());
 
@@ -386,6 +393,8 @@ class Blocknewsletter extends Module
 		$dbquery->from('newsletter', 'n');
 		$dbquery->leftJoin('shop', 's', 's.id_shop = n.id_shop');
 		$dbquery->where('n.`active` = 1');
+		if ($this->_searched_email)
+			$dbquery->where('n.`email` LIKE \'%'.bqSQL($this->_searched_email).'%\' ');
 
 		$non_customers = Db::getInstance()->executeS($dbquery->build());
 
@@ -805,6 +814,45 @@ class Blocknewsletter extends Module
 		$helper->token = Tools::getAdminTokenLite('AdminModules');
 		$helper->tpl_vars = array(
 			'fields_value' => $this->getConfigFieldsValues(),
+			'languages' => $this->context->controller->getLanguages(),
+			'id_language' => $this->context->language->id
+		);
+
+		return $helper->generateForm(array($fields_form));
+	}
+
+	public function renderSearchForm()
+	{
+				$fields_form = array(
+			'form' => array(
+				'legend' => array(
+					'title' => $this->l('Search for addresses'),
+					'icon' => 'icon-search'
+				),
+				'input' => array(
+					array(
+						'type' => 'text',
+						'label' => $this->l('Email address to search'),
+						'name' => 'searched_email',
+						'class' => 'fixed-width-xxl',
+						'desc' => $this->l('Example: contact@prestashop.com or @prestashop.com')
+					),
+				),
+				'submit' => array(
+					'title' => $this->l('Search'),
+					'icon' => 'process-icon-refresh',
+				)
+			),
+		);
+
+		$helper = new HelperForm();
+		$helper->table = $this->table;
+		$helper->identifier = $this->identifier;
+		$helper->submit_action = 'searchEmail';
+		$helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false).'&configure='.$this->name.'&tab_module='.$this->tab.'&module_name='.$this->name;
+		$helper->token = Tools::getAdminTokenLite('AdminModules');
+		$helper->tpl_vars = array(
+			'fields_value' => array('searched_email' => $this->_searched_email),
 			'languages' => $this->context->controller->getLanguages(),
 			'id_language' => $this->context->language->id
 		);
