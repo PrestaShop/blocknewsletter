@@ -705,6 +705,11 @@ class Blocknewsletter extends Module
 		return $this->hookDisplayLeftColumn($params);
 	}
 
+	public function hookdisplayMaintenance($params) 
+	{
+		return $this->hookDisplayLeftColumn($params);
+	}
+
 	public function hookDisplayHeader($params)
 	{
 		$this->context->controller->addCSS($this->_path.'blocknewsletter.css', 'all');
