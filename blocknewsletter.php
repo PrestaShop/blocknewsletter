@@ -114,13 +114,8 @@ class Blocknewsletter extends Module
 
 		if (Tools::isSubmit('submitUpdate'))
 		{
-			$conf_email = Tools::getValue('NW_CONFIRMATION_EMAIL');
-			if ($conf_email && Validate::isBool((int)$conf_email))
-				Configuration::updateValue('NW_CONFIRMATION_EMAIL', (int)$conf_email);
-
-			$verif_email = Tools::getValue('NW_VERIFICATION_EMAIL');
-			if ($verif_email && Validate::isBool((int)$verif_email))
-				Configuration::updateValue('NW_VERIFICATION_EMAIL', (int)$verif_email);
+			Configuration::updateValue('NW_CONFIRMATION_EMAIL', (bool)Tools::getValue('NW_CONFIRMATION_EMAIL'));
+			Configuration::updateValue('NW_VERIFICATION_EMAIL', (bool)Tools::getValue('NW_VERIFICATION_EMAIL'));
 
 			$voucher = Tools::getValue('NW_VOUCHER_CODE');
 			if ($voucher && !Validate::isDiscountName($voucher))
