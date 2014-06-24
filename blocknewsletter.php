@@ -700,8 +700,9 @@ class Blocknewsletter extends Module
 
 	public function hookDisplayLeftColumn($params)
 	{
-		$this->_prepareHook($params);
-
+		if (!isset($this->prepared) || !$this->prepared)
+			$this->_prepareHook($params);
+		$this->prepared = true;
 		return $this->display(__FILE__, 'blocknewsletter.tpl');
 	}
 
