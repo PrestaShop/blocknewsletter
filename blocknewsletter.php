@@ -258,8 +258,7 @@ class Blocknewsletter extends Module
 		$this->smarty->assign(array(
 			'ajax' => $ajax,
 			'enabled' => (bool)$value,
-			'url_enable' => Tools::safeOutput($this->_helperlist->currentIndex.'&'.$this->_helperlist->identifier.'='.$id.'&'.$active.$this->_helperlist->table.($ajax ? '&action='.$active.$this->_helperlist->table.'&ajax='.(int)$ajax : '').
-				((int)$id_category && (int)$id_product ? '&id_category='.(int)$id_category : '').'&token='.$token)
+			'url_enable' => $this->_helperlist->currentIndex.'&'.$this->_helperlist->identifier.'='.$id.'&'.$active.$this->_helperlist->table.($ajax ? '&action='.$active.$this->_helperlist->table.'&ajax='.(int)$ajax : '').((int)$id_category && (int)$id_product ? '&id_category='.(int)$id_category : '').'&token='.$token
 		));
 
 		return $this->display(__FILE__, 'views/templates/admin/list_action_enable.tpl');
@@ -268,7 +267,7 @@ class Blocknewsletter extends Module
 	public function displayUnsubscribeLink($token = null, $id, $name = null)
 	{
 		$this->smarty->assign(array(
-			'href' => Tools::safeOutput($this->_helperlist->currentIndex.'&subscribedcustomer&'.$this->_helperlist->identifier.'='.$id.'&token='.$token),
+			'href' => $this->_helperlist->currentIndex.'&subscribedcustomer&'.$this->_helperlist->identifier.'='.$id.'&token='.$token,
 			'action' => $this->l('Unsubscribe'),
 		));
 
