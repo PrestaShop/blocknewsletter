@@ -144,6 +144,21 @@ class Blocknewsletter extends Module
 			fclose($fd);
 			Tools::redirect(_PS_BASE_URL_.__PS_BASE_URI__.'modules/'.$this->name.'/'.$file_name);
 		}
+		elseif(Tools::isSubmit('exportOnlyBlockNews'))
+		{
+			$array_to_export = $this->getBlockNewsletterSubscriber();
+
+			$file_name = time().'.csv';
+			$fd = fopen($this->getLocalPath().$file_name, 'w+');
+			foreach ($array_to_export as $tab)
+			{
+				$line = implode(';', $tab);
+				$line .= "\n";
+				fwrite($fd, $line, 4096);
+			}
+			fclose($fd);
+			Tools::redirect(_PS_BASE_URL_.__PS_BASE_URI__.'modules/'.$this->name.'/'.$file_name);
+		}
 		elseif (Tools::isSubmit('searchEmail'))
 			$this->_searched_email = Tools::getValue('searched_email');
 
@@ -154,6 +169,8 @@ class Blocknewsletter extends Module
 		$this->_html .= '<div class="panel"><a href="'.$this->context->link->getAdminLink('AdminModules', false).'&exportSubscribers&configure='.$this->name.'&token='.Tools::getAdminTokenLite('AdminModules').'">
     <button class="btn btn-default btn-lg"><span class="icon icon-share"></span> '.$this->l('Export as CSV').'</button>
 </a></div>';
+
+		$this->_html .= $this->renderExportForm();
 
 		return $this->_html;
 	}
@@ -710,7 +727,7 @@ class Blocknewsletter extends Module
 		return $this->hookDisplayLeftColumn($params);
 	}
 
-	public function hookdisplayMaintenance($params) 
+	public function hookdisplayMaintenance($params)
 	{
 		return $this->hookDisplayLeftColumn($params);
 	}
@@ -816,6 +833,42 @@ class Blocknewsletter extends Module
 		return $helper->generateForm(array($fields_form));
 	}
 
+	public function renderExportForm()
+	{
+		$fields_form = array(
+			'form' => array(
+				'legend' => array(
+					'title' => $this->l('Export Newsletter Subscribers'),
+					'icon' => 'icon-envelope'
+				),
+				'desc' => array(
+					array('text' => $this->l('Generate a .CSV file based on BlockNewsletter subscribers data. Only subscribers without an account on the shop will be exported.'))
+				),
+				'submit' => array(
+					'title' => $this->l('Export .CSV file'),
+					'class' => 'btn btn-default pull-right',
+					'name' => 'submitExportmodule',
+					)
+				),
+			);
+
+			$helper = new HelperForm();
+			$helper->table = $this->table;
+			$lang = new Language((int)Configuration::get('PS_LANG_DEFAULT'));
+			$helper->default_form_language = $lang->id;
+			$helper->allow_employee_form_lang = Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') ? Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') : 0;
+			$helper->identifier = $this->identifier;
+			$helper->submit_action = 'exportOnlyBlockNews';
+			$helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false).'&configure='.$this->name.'&tab_module='.$this->tab.'&module_name='.$this->name;
+			$helper->token = Tools::getAdminTokenLite('AdminModules');
+			$helper->tpl_vars = array(
+				'fields_value' => $this->getConfigFieldsValues(),
+				'languages' => $this->context->controller->getLanguages(),
+				'id_language' => $this->context->language->id
+			);
+			return $helper->generateForm(array($fields_form));
+		}
+
 	public function renderSearchForm()
 	{
 				$fields_form = array(
@@ -862,5 +915,22 @@ class Blocknewsletter extends Module
 			'NW_CONFIRMATION_EMAIL' => Tools::getValue('NW_CONFIRMATION_EMAIL', Configuration::get('NW_CONFIRMATION_EMAIL')),
 			'NW_VOUCHER_CODE' => Tools::getValue('NW_VOUCHER_CODE', Configuration::get('NW_VOUCHER_CODE')),
 		);
+	}
+
+	public function getBlockNewsletterSubscriber()
+	{
+		$rq_sql = 'SELECT `id`, `email`, `newsletter_date_add`, `ip_registration_newsletter`
+			FROM `'._DB_PREFIX_.'newsletter`
+			WHERE `active` = 1';
+
+		if (Context::getContext()->cookie->shopContext)
+			$rq_sql .= ' AND `id_shop` = '.(int)Context::getContext()->shop->id;
+
+		$rq = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($rq_sql);
+
+		$header = array('id_customer', 'email', 'newsletter_date_add', 'ip_address', 'http_referer');
+		$result = (is_array($rq) ? array_merge(array($header), $rq) : $header);
+
+		return $result;
 	}
 }
