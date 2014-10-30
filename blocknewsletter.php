@@ -109,7 +109,7 @@ class Blocknewsletter extends Module
 				$this->_html .= $this->displayConfirmation($this->l('Settings updated'));
 			}
 		}
-		elseif (Tools::isSubmit('subscribedcustomer'))
+		elseif (Tools::isSubmit('subscribedmerged'))
 		{
 			$id = Tools::getValue('id');
 
