@@ -48,7 +48,7 @@ class Blocknewsletter extends Module
 		$this->confirmUninstall = $this->l('Are you sure that you want to delete all of your contacts?');
 		$this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
 
-		$this->version = '2.1.2';
+		$this->version = '2.1.3';
 		$this->author = 'PrestaShop';
 		$this->error = false;
 		$this->valid = false;
@@ -393,10 +393,10 @@ class Blocknewsletter extends Module
 		$dbquery->from('customer', 'c');
 		$dbquery->leftJoin('shop', 's', 's.id_shop = c.id_shop');
 		$dbquery->leftJoin('gender', 'g', 'g.id_gender = c.id_gender');
-		$dbquery->leftJoin('gender_lang', 'gl', 'g.id_gender = gl.id_gender AND gl.id_lang = '.$this->context->employee->id_lang);
+		$dbquery->leftJoin('gender_lang', 'gl', 'g.id_gender = gl.id_gender AND gl.id_lang = '.(int)$this->context->employee->id_lang);
 		$dbquery->where('c.`newsletter` = 1');
 		if ($this->_searched_email)
-			$dbquery->where('c.`email` LIKE \'%'.bqSQL($this->_searched_email).'%\' ');
+			$dbquery->where('c.`email` LIKE \'%'.pSQL($this->_searched_email).'%\' ');
 
 		$customers = Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($dbquery->build());
 
@@ -406,7 +406,7 @@ class Blocknewsletter extends Module
 		$dbquery->leftJoin('shop', 's', 's.id_shop = n.id_shop');
 		$dbquery->where('n.`active` = 1');
 		if ($this->_searched_email)
-			$dbquery->where('n.`email` LIKE \'%'.bqSQL($this->_searched_email).'%\' ');
+			$dbquery->where('n.`email` LIKE \'%'.pSQL($this->_searched_email).'%\' ');
 
 		$non_customers = Db::getInstance()->executeS($dbquery->build());
 
