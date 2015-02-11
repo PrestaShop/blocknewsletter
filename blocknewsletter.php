@@ -303,7 +303,7 @@ class Blocknewsletter extends Module
 	 *                1 = registered in block
 	 *                2 = registered in customer
 	 */
-	private function isNewsletterRegistered($customer_email)
+	protected function isNewsletterRegistered($customer_email)
 	{
 		$sql = 'SELECT `email`
 				FROM '._DB_PREFIX_.'newsletter
@@ -330,7 +330,7 @@ class Blocknewsletter extends Module
 	/**
 	 * Register in block newsletter
 	 */
-	private function newsletterRegistration()
+	protected function newsletterRegistration()
 	{
 		if (empty($_POST['email']) || !Validate::isEmail($_POST['email']))
 			return $this->error = $this->l('Invalid email address.');
@@ -685,7 +685,7 @@ class Blocknewsletter extends Module
 		return $this->hookDisplayLeftColumn($params);
 	}
 
-	private function _prepareHook($params)
+	protected function _prepareHook($params)
 	{
 		if (Tools::isSubmit('submitNewsletter'))
 		{
