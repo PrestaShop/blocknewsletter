@@ -234,7 +234,7 @@ class Blocknewsletter extends Module
 		$helper_list->token = Tools::getAdminTokenLite('AdminModules');
 		$helper_list->actions = array('viewCustomer');
 		$helper_list->toolbar_btn['export'] = array(
-			'href' => $helper_list->currentIndex.'&amp;exportSubscribers&amp;token='.$helper_list->token,
+			'href' => $helper_list->currentIndex.'&exportSubscribers&token='.$helper_list->token,
 			'desc' => $this->l('Export')
 		);
 
