@@ -857,14 +857,14 @@ class Blocknewsletter extends Module
 		$fields_form = array(
 			'form' => array(
 				'legend' => array(
-					'title' => $this->l('Export customers'),
+					'title' => $this->l('Export customers\' addresses'),
 					'icon' => 'icon-envelope'
 				),
 				'input' => array(
 					array(
 						'type' => 'select',
 						'label' => $this->l('Customers\' country'),
-						'desc' => $this->l('Operate a filter on customers\' country.'),
+						'desc' => $this->l('Filter customers by country.'),
 						'name' => 'COUNTRY',
 						'required' => false,
 						'default_value' => (int)$this->context->country->id,
@@ -877,13 +877,14 @@ class Blocknewsletter extends Module
 					array(
 						'type' => 'select',
 						'label' => $this->l('Newsletter subscribers'),
-						'desc' => $this->l('Filter newsletter subscribers.'),
+						'desc' => $this->l('Filter customers who have subscribed to the newsletter or not, and who have an account or not.'),
+						'hint' => $this->l('Customers can subscribe to your newsletter when registering, or by entering their email in the newsletter block.'),
 						'name' => 'SUSCRIBERS',
 						'required' => false,
 						'default_value' => (int)$this->context->country->id,
 						'options' => array(
 							'query' => array(
-								array('id' => 0, 'name' => $this->l('All Subscribers')),
+								array('id' => 0, 'name' => $this->l('All subscribers')),
 								array('id' => 1, 'name' => $this->l('Subscribers with an account')),
 								array('id' => 2, 'name' => $this->l('Subscribers without an account')),
 								array('id' => 3, 'name' => $this->l('Non-subscribers'))
@@ -895,15 +896,16 @@ class Blocknewsletter extends Module
 					array(
 						'type' => 'select',
 						'label' => $this->l('Opted-in subscribers'),
-						'desc' => $this->l('Filter opted-in subscribers.'),
+						'desc' => $this->l('Filter customers who have agreed to receive your partners\' offers or not.'),
+						'hint' => $this->l('Opted-in subscribers have agreed to receive your partners\' offers.'),
 						'name' => 'OPTIN',
 						'required' => false,
 						'default_value' => (int)$this->context->country->id,
 						'options' => array(
 							'query' => array(
 								array('id' => 0, 'name' => $this->l('All customers')),
-								array('id' => 2, 'name' => $this->l('Subscribers')),
-								array('id' => 1, 'name' => $this->l('Non-subscribers'))
+								array('id' => 2, 'name' => $this->l('Opt-in subscribers')),
+								array('id' => 1, 'name' => $this->l('Opt-in non-subscribers'))
 							),
 							'id' => 'id',
 							'name' => 'name',
@@ -1071,7 +1073,7 @@ class Blocknewsletter extends Module
 		}
 
 		$non_customers = array();
-		if (($who == 0 || $who == 2) && !$optin && !$country)
+		if (($who == 0 || $who == 2) && (!$optin || $optin == 2) && !$country)
 		{
 			$dbquery = new DbQuery();
 			$dbquery->select('CONCAT(\'N\', n.`id`) AS `id`, s.`name` AS `shop_name`, NULL AS `gender`, NULL AS `lastname`, NULL AS `firstname`, n.`email`, n.`active` AS `subscribed`, n.`newsletter_date_add`');
