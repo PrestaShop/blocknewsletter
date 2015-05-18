@@ -39,6 +39,7 @@
 			</p>
 		</form>
 	</div>
+    {hook h="displayBlockNewsletterBottom" from='blocknewsletter'}
 </div>
 <!-- /Block Newsletter module-->
 
