@@ -1030,7 +1030,7 @@ class Blocknewsletter extends Module
 				$this->_html .= $this->displayError($this->l('Error: cannot write').' '.dirname(__FILE__).'/'.strval(Tools::getValue('action')).'_'.$this->file.' !');
 		}
 		else
-			$this->_html .= $this->displayError($this->l('No result found !'));
+			$this->_html .= $this->displayError($this->l('No result found!'));
 	}
 
 	private function getCustomers()
