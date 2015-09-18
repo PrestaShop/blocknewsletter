@@ -312,7 +312,7 @@ class Blocknewsletter extends Module
 	 *                1 = registered in block
 	 *                2 = registered in customer
 	 */
-	protected function isNewsletterRegistered($customer_email)
+	public function isNewsletterRegistered($customer_email)
 	{
 		$sql = 'SELECT `email`
 				FROM '._DB_PREFIX_.'newsletter
