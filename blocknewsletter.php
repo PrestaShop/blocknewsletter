@@ -69,47 +69,6 @@ class Blocknewsletter extends Module
 		{
 			$this->file = 'export_'.Configuration::get('PS_NEWSLETTER_RAND').'.csv';
 			$this->post_valid = array();
-
-			// Getting data...
-			$countries = Country::getCountries($this->context->language->id);
-
-			// ...formatting array
-			$countries_list = array($this->l('All countries'));
-			foreach ($countries as $country)
-				$countries_list[$country['id_country']] = $country['name'];
-
-			// And filling fields to show !
-			$this->fields_export = array(
-				'COUNTRY' => array(
-					'title' => $this->l('Customers\' country'),
-					'desc' => $this->l('Operate a filter on customers\' country.'),
-					'type' => 'select',
-					'value' => $countries_list,
-					'value_default' => 0
-				),
-				'SUSCRIBERS' => array(
-					'title' => $this->l('Newsletter subscribers'),
-					'desc' => $this->l('Filter newsletter subscribers.'),
-					'type' => 'select',
-					'value' => array(
-						0 => $this->l('All customers'),
-						2 => $this->l('Subscribers'),
-						1 => $this->l('Non-subscribers')
-					),
-					'value_default' => 2
-				),
-				'OPTIN' => array(
-					'title' => $this->l('Opted-in subscribers'),
-					'desc' => $this->l('Filter opted-in subscribers.'),
-					'type' => 'select',
-					'value' => array(
-						0 => $this->l('All customers'),
-						2 => $this->l('Subscribers'),
-						1 => $this->l('Non-subscribers')
-					),
-					'value_default' => 0
-				),
-			);
 		}
 	}
 
