@@ -99,8 +99,8 @@ class Blocknewsletter extends Module
 					'value_default' => 2
 				),
 				'OPTIN' => array(
-					'title' => $this->l('Opted-in subscribers'),
-					'desc' => $this->l('Filter opted-in subscribers.'),
+					'title' => $this->l('Opt-in subscribers'),
+					'desc' => $this->l('Filter opt-in subscribers.'),
 					'type' => 'select',
 					'value' => array(
 						0 => $this->l('All customers'),
