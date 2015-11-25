@@ -1097,4 +1097,29 @@ class Blocknewsletter extends Module
 		if (!fwrite($fd, $line, 4096))
 			$this->post_errors[] = $this->l('Error: Write access limited').' '.dirname(__FILE__).'/'.$this->file.' !';
 	}
+
+	public function ajaxProcessRegistration()
+	{
+		$response = array(
+			'status' => 0,
+			'error'  => 0,
+			'msg'    => '',
+			'email'  => '',
+		);
+
+		if (Tools::isSubmit('submitNewsletter') && Tools::getValue('ajax')) {
+			$response['status'] = 1;
+			$response['email'] = isset($_POST['email']) ? (string)$_POST['email'] : '';
+			$this->newsletterRegistration();
+			if ($this->error) {
+				$response['error'] = 1;
+				$response['msg']   = $this->error;
+			} elseif ($this->valid) {
+				$response['error'] = 0;
+				$response['msg']   = $this->valid;
+			}
+		}
+
+		return $response;
+	}
 }
