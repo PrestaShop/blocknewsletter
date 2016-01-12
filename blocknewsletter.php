@@ -28,7 +28,9 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-class blocknewsletter extends Module
+use PrestaShop\PrestaShop\Core\Business\Module\WidgetInterface;
+
+class blocknewsletter extends Module implements WidgetInterface
 {
     const GUEST_NOT_REGISTERED = -1;
     const CUSTOMER_NOT_REGISTERED = 0;
@@ -49,9 +51,9 @@ class blocknewsletter extends Module
         $this->displayName = $this->l('Newsletter block');
         $this->description = $this->l('Adds a block for newsletter subscription.');
         $this->confirmUninstall = $this->l('Are you sure that you want to delete all of your contacts?');
-        $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
+        $this->ps_versions_compliancy = array('min' => '1.7', 'max' => _PS_VERSION_);
 
-        $this->version = '2.3.1';
+        $this->version = '3.0.0';
         $this->author = 'PrestaShop';
         $this->error = false;
         $this->valid = false;
@@ -116,7 +118,7 @@ class blocknewsletter extends Module
 
     public function install()
     {
-        if (!parent::install() || !Configuration::updateValue('PS_NEWSLETTER_RAND', rand().rand()) || !$this->registerHook(array('header', 'footer', 'actionCustomerAccountAdd'))) {
+        if (!parent::install() || !Configuration::updateValue('PS_NEWSLETTER_RAND', rand().rand()) || !$this->registerHook(array('footer', 'actionCustomerAccountAdd'))) {
             return false;
         }
 
@@ -693,61 +695,34 @@ class blocknewsletter extends Module
         return Mail::Send($this->context->language->id, 'newsletter_verif', Mail::l('Email verification', $this->context->language->id), array('{verif_url}' => $verif_url), $email, null, null, null, null, null, dirname(__FILE__).'/mails/', false, $this->context->shop->id);
     }
 
-    public function hookDisplayRightColumn($params)
+    public function renderWidget($hookName = null, array $configuration = [])
     {
-        return $this->hookDisplayLeftColumn($params);
+        if (!$this->isCached('blocknewsletter.tpl', $this->getCacheId()) && !$this->error && !$this->valid) {
+            $this->smarty->assign($this->getWidgetVariables($hookName, $configuration));
+        }
+
+        return $this->display(__FILE__, 'blocknewsletter.tpl', $this->getCacheId());
     }
 
-    protected function _prepareHook($params)
+    public function getWidgetVariables($hookName = null, array $configuration = [])
     {
+        $variables = [];
+
+        $variables['value'] = Tools::getValue('email', '');
+        $variables['msg'] = '';
+
         if (Tools::isSubmit('submitNewsletter')) {
             $this->newsletterRegistration();
             if ($this->error) {
-                $this->smarty->assign(
-                    array(
-                        'color' => 'red',
-                        'msg' => $this->error,
-                        'nw_value' => isset($_POST['email']) ? pSQL($_POST['email']) : false,
-                        'nw_error' => true,
-                        'action' => $_POST['action']
-                    )
-                );
+                $variables['msg'] = $this->error;
+                $variables['nw_error'] = true;
             } elseif ($this->valid) {
-                $this->smarty->assign(
-                    array(
-                        'color' => 'green',
-                        'msg' => $this->valid,
-                        'nw_error' => false
-                    )
-                );
+                $variables['msg'] = $this->valid;
+                $variables['nw_error'] = false;
             }
         }
-        $this->smarty->assign('this_path', $this->_path);
-    }
 
-    public function hookDisplayLeftColumn($params)
-    {
-        if (!isset($this->prepared) || !$this->prepared) {
-            $this->_prepareHook($params);
-        }
-        $this->prepared = true;
-        return $this->display(__FILE__, 'blocknewsletter.tpl');
-    }
-
-    public function hookFooter($params)
-    {
-        return $this->hookDisplayLeftColumn($params);
-    }
-
-    public function hookdisplayMaintenance($params)
-    {
-        return $this->hookDisplayLeftColumn($params);
-    }
-
-    public function hookDisplayHeader($params)
-    {
-        $this->context->controller->addCSS($this->_path.'blocknewsletter.css', 'all');
-        $this->context->controller->addJS($this->_path.'blocknewsletter.js');
+        return $variables;
     }
 
     /**
