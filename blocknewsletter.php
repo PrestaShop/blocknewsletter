@@ -125,6 +125,7 @@ class Blocknewsletter extends Module
 			`id` int(6) NOT NULL AUTO_INCREMENT,
 			`id_shop` INTEGER UNSIGNED NOT NULL DEFAULT \'1\',
 			`id_shop_group` INTEGER UNSIGNED NOT NULL DEFAULT \'1\',
+			`id_lang` int(10) NOT NULL,
 			`email` varchar(255) NOT NULL,
 			`newsletter_date_add` DATETIME NULL,
 			`ip_registration_newsletter` varchar(15) NOT NULL,
