@@ -508,10 +508,11 @@ class Blocknewsletter extends Module
 	 */
 	protected function registerGuest($email, $active = true)
 	{
-		$sql = 'INSERT INTO '._DB_PREFIX_.'newsletter (id_shop, id_shop_group, email, newsletter_date_add, ip_registration_newsletter, http_referer, active)
+		$sql = 'INSERT INTO '._DB_PREFIX_.'newsletter (id_shop, id_shop_group, id_lang, email, newsletter_date_add, ip_registration_newsletter, http_referer, active)
 				VALUES
 				('.$this->context->shop->id.',
 				'.$this->context->shop->id_shop_group.',
+				'.$this->context->language->id.',
 				\''.pSQL($email).'\',
 				NOW(),
 				\''.pSQL(Tools::getRemoteAddr()).'\',
