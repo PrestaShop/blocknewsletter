@@ -118,7 +118,7 @@ class blocknewsletter extends Module implements WidgetInterface
 
     public function install()
     {
-        if (!parent::install() || !Configuration::updateValue('PS_NEWSLETTER_RAND', rand().rand()) || !$this->registerHook(array('footer', 'actionCustomerAccountAdd'))) {
+        if (!parent::install() || !Configuration::updateValue('PS_NEWSLETTER_RAND', rand().rand()) || !$this->registerHook(array('displayFooterBefore', 'actionCustomerAccountAdd'))) {
             return false;
         }
 
