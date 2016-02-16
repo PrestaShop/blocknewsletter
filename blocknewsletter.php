@@ -697,11 +697,8 @@ class blocknewsletter extends Module implements WidgetInterface
 
     public function renderWidget($hookName = null, array $configuration = [])
     {
-        if (!$this->isCached('blocknewsletter.tpl', $this->getCacheId()) && !$this->error && !$this->valid) {
-            $this->smarty->assign($this->getWidgetVariables($hookName, $configuration));
-        }
-
-        return $this->display(__FILE__, 'blocknewsletter.tpl', $this->getCacheId());
+        $this->smarty->assign($this->getWidgetVariables($hookName, $configuration));
+        return $this->display(__FILE__, 'blocknewsletter.tpl', !$this->error && !$this->valid ? $this->getCacheId() : null);
     }
 
     public function getWidgetVariables($hookName = null, array $configuration = [])
