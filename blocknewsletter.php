@@ -141,6 +141,14 @@ class Blocknewsletter extends Module
 		return parent::uninstall();
 	}
 
+	public function reset()
+	{
+		if (!$this->uninstall() || !$this->install())
+			return false;
+
+		return true;
+	}
+
 	public function getContent()
 	{
 		if (Tools::isSubmit('submitUpdate'))
