@@ -136,7 +136,7 @@ class Blocknewsletter extends Module
 
 	public function uninstall()
 	{
-		Db::getInstance()->execute('DROP TABLE '._DB_PREFIX_.'newsletter');
+	
 
 		return parent::uninstall();
 	}
