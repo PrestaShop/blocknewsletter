@@ -65,7 +65,8 @@ class Blocknewsletter extends Module
 		$this->_searched_email = null;
 
 		$this->_html = '';
-		if ($this->id)
+		$front = in_array($this->context->controller->controller_type, array('front', 'modulefront'));
+		if ($this->id && !$front)
 		{
 			$this->file = 'export_'.Configuration::get('PS_NEWSLETTER_RAND').'.csv';
 			$this->post_valid = array();
