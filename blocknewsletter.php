@@ -126,6 +126,7 @@ class Blocknewsletter extends Module
 			`id_shop` INTEGER UNSIGNED NOT NULL DEFAULT \'1\',
 			`id_shop_group` INTEGER UNSIGNED NOT NULL DEFAULT \'1\',
 			`email` varchar(255) NOT NULL,
+			`id_lang` int(10) unsigned NOT NULL,
 			`newsletter_date_add` DATETIME NULL,
 			`ip_registration_newsletter` varchar(15) NOT NULL,
 			`http_referer` VARCHAR(255) NULL,
@@ -508,11 +509,12 @@ class Blocknewsletter extends Module
 	 */
 	protected function registerGuest($email, $active = true)
 	{
-		$sql = 'INSERT INTO '._DB_PREFIX_.'newsletter (id_shop, id_shop_group, email, newsletter_date_add, ip_registration_newsletter, http_referer, active)
+		$sql = 'INSERT INTO '._DB_PREFIX_.'newsletter (id_shop, id_shop_group, email, id_lang, newsletter_date_add, ip_registration_newsletter, http_referer, active)
 				VALUES
 				('.$this->context->shop->id.',
 				'.$this->context->shop->id_shop_group.',
 				\''.pSQL($email).'\',
+				'.$this->context->language->id.',
 				NOW(),
 				\''.pSQL(Tools::getRemoteAddr()).'\',
 				(
@@ -1052,7 +1054,7 @@ class Blocknewsletter extends Module
 		if ($who == 1 || $who == 0 || $who == 3)
 		{
 			$dbquery = new DbQuery();
-			$dbquery->select('c.`id_customer` AS `id`, s.`name` AS `shop_name`, gl.`name` AS `gender`, c.`lastname`, c.`firstname`, c.`email`, c.`newsletter` AS `subscribed`, c.`newsletter_date_add`');
+			$dbquery->select('c.`id_customer` AS `id`, s.`name` AS `shop_name`, gl.`name` AS `gender`, c.`lastname`, c.`firstname`, c.`email`, c.`id_lang`, c.`newsletter` AS `subscribed`, c.`newsletter_date_add`');
 			$dbquery->from('customer', 'c');
 			$dbquery->leftJoin('shop', 's', 's.id_shop = c.id_shop');
 			$dbquery->leftJoin('gender', 'g', 'g.id_gender = c.id_gender');
@@ -1076,7 +1078,7 @@ class Blocknewsletter extends Module
 		if (($who == 0 || $who == 2) && (!$optin || $optin == 2) && !$country)
 		{
 			$dbquery = new DbQuery();
-			$dbquery->select('CONCAT(\'N\', n.`id`) AS `id`, s.`name` AS `shop_name`, NULL AS `gender`, NULL AS `lastname`, NULL AS `firstname`, n.`email`, n.`active` AS `subscribed`, n.`newsletter_date_add`');
+			$dbquery->select('CONCAT(\'N\', n.`id`) AS `id`, s.`name` AS `shop_name`, NULL AS `gender`, NULL AS `lastname`, NULL AS `firstname`, n.`email`, n.`id_lang`, n.`active` AS `subscribed`, n.`newsletter_date_add`');
 			$dbquery->from('newsletter', 'n');
 			$dbquery->leftJoin('shop', 's', 's.id_shop = n.id_shop');
 			$dbquery->where('n.`active` = 1');
