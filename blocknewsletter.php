@@ -33,6 +33,7 @@ class Blocknewsletter extends Module
 	const CUSTOMER_NOT_REGISTERED = 0;
 	const GUEST_REGISTERED = 1;
 	const CUSTOMER_REGISTERED = 2;
+	const GUEST_REGISTERED_INACTIVE = 3;
 
 	public function __construct()
 	{
@@ -311,27 +312,33 @@ class Blocknewsletter extends Module
 	 *                0 = customer not registered
 	 *                1 = registered in block
 	 *                2 = registered in customer
+	 *                3 = registered in block and inactive
 	 */
 	public function isNewsletterRegistered($customer_email)
 	{
-		$sql = 'SELECT `email`
-				FROM '._DB_PREFIX_.'newsletter
-				WHERE `email` = \''.pSQL($customer_email).'\'
-				AND id_shop = '.$this->context->shop->id;
+		$sql = 'SELECT `email`, `active`
+				FROM `' . _DB_PREFIX_ . 'newsletter`
+				WHERE `email` = \'' . pSQL($customer_email) . '\'
+				AND `id_shop` = ' . $this->context->shop->id;
 
-		if (Db::getInstance()->getRow($sql))
-			return self::GUEST_REGISTERED;
+		if ($result = Db::getInstance()->getRow($sql)) {
+			return (0 === (int)$result['active'])
+				? self::GUEST_REGISTERED_INACTIVE
+				: self::GUEST_REGISTERED;
+		}
 
 		$sql = 'SELECT `newsletter`
-				FROM '._DB_PREFIX_.'customer
-				WHERE `email` = \''.pSQL($customer_email).'\'
-				AND id_shop = '.$this->context->shop->id;
+				FROM `' . _DB_PREFIX_ . 'customer`
+				WHERE `email` = \'' . pSQL($customer_email) . '\'
+				AND `id_shop` = ' . $this->context->shop->id;
 
-		if (!$registered = Db::getInstance()->getRow($sql))
+		if (!$registered = Db::getInstance()->getRow($sql)) {
 			return self::GUEST_NOT_REGISTERED;
+		}
 
-		if ($registered['newsletter'] == '1')
+		if ($registered['newsletter'] == '1') {
 			return self::CUSTOMER_REGISTERED;
+		}
 
 		return self::CUSTOMER_NOT_REGISTERED;
 	}
@@ -341,12 +348,10 @@ class Blocknewsletter extends Module
 	 */
 	protected function newsletterRegistration()
 	{
-		if (empty($_POST['email']) || !Validate::isEmail($_POST['email']))
+		if (empty($_POST['email']) || !Validate::isEmail($_POST['email'])) {
 			return $this->error = $this->l('Invalid email address.');
-
-		/* Unsubscription */
-		else if ($_POST['action'] == '1')
-		{
+		} /* Unsubscription */
+		else if ($_POST['action'] === '1') {
 			$register_status = $this->isNewsletterRegistered($_POST['email']);
 
 			if ($register_status < 1)
@@ -356,42 +361,49 @@ class Blocknewsletter extends Module
 				return $this->error = $this->l('An error occurred while attempting to unsubscribe.');
 
 			return $this->valid = $this->l('Unsubscription successful.');
-		}
-		/* Subscription */
-		else if ($_POST['action'] == '0')
-		{
+		} /* Subscription */
+		else if ($_POST['action'] === '0') {
 			$register_status = $this->isNewsletterRegistered($_POST['email']);
-			if ($register_status > 0)
-				return $this->error = $this->l('This email address is already registered.');
-
 			$email = pSQL($_POST['email']);
-			if (!$this->isRegistered($register_status))
-			{
-				if (Configuration::get('NW_VERIFICATION_EMAIL'))
-				{
-					// create an unactive entry in the newsletter database
-					if ($register_status == self::GUEST_NOT_REGISTERED)
-						$this->registerGuest($email, false);
 
-					if (!$token = $this->getToken($email, $register_status))
+			switch ($register_status) {
+				case 1:
+				case 2:
+					return $this->error = $this->l('This email address is already registered.');
+				case 3:
+					return ($this->activateGuest($email))
+						? $this->valid = $this->l('Thank you for subscribing to our newsletter.')
+						: $this->error = $this->l('This email is already registered and/or invalid.');
+			}
+
+			if (!$this->isRegistered($register_status)) {
+				if (Configuration::get('NW_VERIFICATION_EMAIL')) {
+					// create an unactive entry in the newsletter database
+					if ($register_status == self::GUEST_NOT_REGISTERED) {
+						$this->registerGuest($email, false);
+					}
+
+					if (!$token = $this->getToken($email, $register_status)) {
 						return $this->error = $this->l('An error occurred during the subscription process.');
+					}
 
 					$this->sendVerificationEmail($email, $token);
 
 					return $this->valid = $this->l('A verification email has been sent. Please check your inbox.');
-				}
-				else
-				{
-					if ($this->register($email, $register_status))
+				} else {
+					if ($this->register($email, $register_status)) {
 						$this->valid = $this->l('You have successfully subscribed to this newsletter.');
-					else
+					} else {
 						return $this->error = $this->l('An error occurred during the subscription process.');
+					}
 
-					if ($code = Configuration::get('NW_VOUCHER_CODE'))
+					if ($code = Configuration::get('NW_VOUCHER_CODE')) {
 						$this->sendVoucher($email, $code);
+					}
 
-					if (Configuration::get('NW_CONFIRMATION_EMAIL'))
+					if (Configuration::get('NW_CONFIRMATION_EMAIL')) {
 						$this->sendConfirmationEmail($email);
+					}
 				}
 			}
 		}
