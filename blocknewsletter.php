@@ -752,11 +752,9 @@ class Blocknewsletter extends Module
 
 	public function hookActionDeleteGDPRCustomer($customer)
 	{
-		if (!empty($customer['email']) && Validate::isEmail($customer['email']))
-		{
+		if (!empty($customer['email']) && Validate::isEmail($customer['email'])) {
 			$sql = "DELETE FROM "._DB_PREFIX_."newsletter WHERE email = '".pSQL($customer['email'])."'";
-			if (Db::getInstance()->execute($sql))
-			{
+			if (Db::getInstance()->execute($sql)) {
 				return json_encode(true);
 			}
 			return json_encode($this->l('Newsletter block : Unable to delete customer using email.'));
@@ -765,11 +763,9 @@ class Blocknewsletter extends Module
 
 	public function hookActionExportGDPRData($customer)
 	{
-		if (!Tools::isEmpty($customer['email']) && Validate::isEmail($customer['email']))
-		{
+		if (!Tools::isEmpty($customer['email']) && Validate::isEmail($customer['email'])) {
 			$sql = "SELECT * FROM "._DB_PREFIX_."newsletter WHERE email = '".pSQL($customer['email'])."'";
-			if ($res = Db::getInstance()->ExecuteS($sql))
-			{
+			if ($res = Db::getInstance()->ExecuteS($sql)) {
 				return json_encode($res);
 			}
 			return json_encode($this->l('Newsletter block : Unable to export customer using email.'));
