@@ -2,7 +2,7 @@
   "name": "prestashop/blocknewsletter",
   "description": "PrestaShop module blocknewsletter",
   "homepage": "https://github.com/PrestaShop/blocknewsletter",
-  "license": "AFL - Academic Free License (AFL 3.0)",
+  "license": "AFL-3.0",
   "authors": [
     {
       "name": "PrestaShop SA",
