@@ -125,6 +125,7 @@ class Blocknewsletter extends Module
 			`id` int(6) NOT NULL AUTO_INCREMENT,
 			`id_shop` INTEGER UNSIGNED NOT NULL DEFAULT \'1\',
 			`id_shop_group` INTEGER UNSIGNED NOT NULL DEFAULT \'1\',
+			`id_lang` int(10) NOT NULL,
 			`email` varchar(255) NOT NULL,
 			`newsletter_date_add` DATETIME NULL,
 			`ip_registration_newsletter` varchar(15) NOT NULL,
@@ -508,10 +509,11 @@ class Blocknewsletter extends Module
 	 */
 	protected function registerGuest($email, $active = true)
 	{
-		$sql = 'INSERT INTO '._DB_PREFIX_.'newsletter (id_shop, id_shop_group, email, newsletter_date_add, ip_registration_newsletter, http_referer, active)
+		$sql = 'INSERT INTO '._DB_PREFIX_.'newsletter (id_shop, id_shop_group, id_lang, email, newsletter_date_add, ip_registration_newsletter, http_referer, active)
 				VALUES
 				('.$this->context->shop->id.',
 				'.$this->context->shop->id_shop_group.',
+				'.$this->context->language->id.',
 				\''.pSQL($email).'\',
 				NOW(),
 				\''.pSQL(Tools::getRemoteAddr()).'\',
