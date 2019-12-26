@@ -471,9 +471,9 @@ class Blocknewsletter extends Module
 	protected function unregister($email, $register_status)
 	{
 		if ($register_status == self::GUEST_REGISTERED)
-			$sql = 'DELETE FROM '._DB_PREFIX_.'newsletter WHERE `email` = \''.pSQL($_POST['email']).'\' AND id_shop = '.$this->context->shop->id;
+			$sql = 'DELETE FROM '._DB_PREFIX_.'newsletter WHERE `email` = \''.pSQL($email).'\' AND id_shop = '.$this->context->shop->id;
 		else if ($register_status == self::CUSTOMER_REGISTERED)
-			$sql = 'UPDATE '._DB_PREFIX_.'customer SET `newsletter` = 0 WHERE `email` = \''.pSQL($_POST['email']).'\' AND id_shop = '.$this->context->shop->id;
+			$sql = 'UPDATE '._DB_PREFIX_.'customer SET `newsletter` = 0 WHERE `email` = \''.pSQL($email).'\' AND id_shop = '.$this->context->shop->id;
 
 		if (!isset($sql) || !Db::getInstance()->execute($sql))
 			return false;
